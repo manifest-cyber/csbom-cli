@@ -8,15 +8,50 @@ A CLI tool for generating comprehensive **Software Bill of Materials (SBOM)** fo
 
 `csbom` supports multiple C/C++ build systems and package managers:
 
-| Build System   | Files Detected                                    |
-| -------------- | ------------------------------------------------- |
-| CMake          | `CMakeLists.txt`, `*.cmake`                       |
-| Conan v1 & v2  | `conanfile.txt`, `conanfile.py`, `conan.lock`     |
-| vcpkg          | `vcpkg.json`, `vcpkg.lock`                        |
-| Meson          | `meson.build`                                     |
-| pkg-config     | `*.pc`                                            |
-| Makefile       | `Makefile`, `*.mk`                                |
-| BitBake/Yocto  | `*.bb`, `*.bbappend`                              |
+| Build System            | Files Detected                                              |
+| ----------------------- | ----------------------------------------------------------- |
+| CMake                   | `CMakeLists.txt`, `*.cmake`                                 |
+| Conan v1 & v2           | `conanfile.txt`, `conanfile.py`, `conan.lock`               |
+| vcpkg                   | `vcpkg.json`, `vcpkg.lock`, `vcpkg-configuration.json`      |
+| Meson                   | `meson.build`                                               |
+| pkg-config              | `*.pc`                                                      |
+| Makefile                | `Makefile`, `*.mk`                                          |
+| BitBake/Yocto           | `*.bb`, `*.bbappend`                                        |
+| MSBuild/Visual Studio   | `*.vcxproj`, `*.props`, `*.sln`                             |
+| GCC/GNU ld map files    | `*.map`                                                     |
+
+### MSBuild / Visual Studio (v1.1.0)
+
+Parses `.vcxproj`, `.props`, and `.sln` files. Follows `Import` chains up to a visited-set limit. Surfaces:
+
+- **NuGet PackageReferences** - `originType: nuget`, `pkg:nuget/` PURLs
+- **AdditionalDependencies** - linked `.lib` files
+- **ProjectReferences** - internal project dependencies
+- **vcpkg custom registries** - from `vcpkg-configuration.json`
+
+### .csbomignore (v1.2.0)
+
+Place a `.csbomignore` file at your project root to exclude directories from the recursive scan. Uses gitignore-style syntax -- designed for Zephyr West workspaces where `west update` pulls in large repos (`nrf/`, `zephyr/`, `modules/`) that are not compiled into the final binary.
+
+```gitignore
+# .csbomignore
+nrf/
+zephyr/
+modules/
+bootloader/
+```
+
+Plain paths like `nrf/` are auto-expanded to `nrf/**`. Patterns with glob characters (`*`, `?`, `{}`, `[]`, `!`) pass through unchanged.
+
+### GCC/GNU ld map file parser (v1.3.0)
+
+Parses GCC linker map files (`*.map`) alongside the existing MSVC map parser. Format is auto-detected from the `Archive member included` section header. Features:
+
+- Extracts static libraries actually linked into the binary
+- Handles Zephyr `__` naming convention
+- Detects target architecture from toolchain triple or ELF output format string
+
+---
 
 Each extracted component gets:
 
