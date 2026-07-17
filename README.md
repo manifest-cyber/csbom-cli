@@ -29,9 +29,21 @@ Parses `.vcxproj`, `.props`, and `.sln` files. Follows `Import` chains up to a v
 - **ProjectReferences** - internal project dependencies
 - **vcpkg custom registries** - from `vcpkg-configuration.json`
 
-### .csbomignore (v1.2.0)
+### Zephyr West manifest auto-ignore (v1.3.0)
 
-Place a `.csbomignore` file at your project root to exclude directories from the recursive scan. Uses gitignore-style syntax -- designed for Zephyr West workspaces where `west update` pulls in large repos (`nrf/`, `zephyr/`, `modules/`) that are not compiled into the final binary.
+For Zephyr West workspaces, `csbom` automatically reads `west.yml` (or `west.yaml`) at the project root and generates ignore patterns for every external project checkout directory (`nrf/`, `zephyr/`, `modules/`, `bootloader/`, etc.). Your own application (`self.path`) is never ignored.
+
+This is zero-config: no `.csbomignore` file is needed. If a `.csbomignore` is also present, both sets of patterns are merged so you can still fine-tune coverage per-project.
+
+West manifest rules applied:
+
+- `projects[].path` sets the local checkout directory
+- When `path` is omitted, the project `name` is used as the directory
+- `self.path` is always kept in scope
+
+### .csbomignore (v1.3.0)
+
+Place a `.csbomignore` file at your project root to exclude directories from the recursive scan. Uses gitignore-style syntax.
 
 ```gitignore
 # .csbomignore
